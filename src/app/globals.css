@@ -1,26 +1,227 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------ */
+/*  Palette: cream → white base, plum ink, four accents.               */
+/*  Yellow + cyan are too light for text on cream, so they're used as   */
+/*  fills / glows / tints only. Text uses ink, ink-dim, purple-deep,    */
+/*  pink-deep.                                                          */
+/* ------------------------------------------------------------------ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --cream: #fff7e8;
+  --cream-soft: #fffbf3;
+  --ink: #26193f;
+  --ink-dim: #554c6e;
+
+  --purple: #8b5cf6;
+  --purple-deep: #5b2fe0;
+  --pink: #ff6fb1;
+  --pink-deep: #c91f75;
+  --yellow: #ffd23f;
+  --cyan: #2ed9f0;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cream: var(--cream);
+  --color-ink: var(--ink);
+  --color-ink-dim: var(--ink-dim);
+  --color-purple: var(--purple);
+  --color-purple-deep: var(--purple-deep);
+  --color-pink: var(--pink);
+  --color-pink-deep: var(--pink-deep);
+  --color-yellow: var(--yellow);
+  --color-cyan: var(--cyan);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+/* Cream at the top of the page fading to white at the bottom.
+   Lives on <html> (not <body>) so the fixed mesh layer can paint above it. */
+html {
+  scroll-behavior: smooth;
+  background-color: var(--cream);
+  background-image: linear-gradient(180deg, var(--cream) 0%, var(--cream-soft) 45%, #ffffff 100%);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  color: var(--ink);
+}
+
+::selection {
+  background: var(--pink);
+  color: var(--ink);
+}
+
+/* ------------------------------------------------------------------ */
+/*  Glass surfaces                                                     */
+/*  Layered so Tailwind utilities (rounded-*, p-*, etc.) still win.    */
+/* ------------------------------------------------------------------ */
+@layer components {
+  .glass {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.42));
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    backdrop-filter: blur(22px) saturate(180%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      0 0 0 1px rgba(38, 25, 63, 0.05),
+      0 20px 44px -20px rgba(91, 47, 224, 0.3);
+  }
+
+  /* Small pill used for tech tags */
+  .chip {
+    background: rgba(255, 255, 255, 0.62);
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 0 1px rgba(38, 25, 63, 0.05);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  /* Yellow primary action */
+  .btn-primary {
+    background: linear-gradient(180deg, #ffe680 0%, var(--yellow) 100%);
+    color: var(--ink);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 0 0 1px rgba(38, 25, 63, 0.06),
+      0 14px 30px -10px rgba(255, 180, 0, 0.85);
+    transition: box-shadow 0.3s ease, filter 0.3s ease;
+  }
+  .btn-primary:hover {
+    filter: saturate(1.08);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 0 0 1px rgba(38, 25, 63, 0.06),
+      0 16px 36px -8px rgba(255, 111, 177, 0.8);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Gradient mesh backdrop: four blurred blobs, slow independent drift. */
+/*  Frozen under prefers-reduced-motion.                                */
+/* ------------------------------------------------------------------ */
+.mesh-blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(100px);
+  will-change: transform;
+}
+
+@keyframes drift-a {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(6vw, 4vh) scale(1.08); }
+  66% { transform: translate(-4vw, 6vh) scale(0.96); }
+}
+@keyframes drift-b {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  40% { transform: translate(-7vw, 5vh) scale(1.05); }
+  75% { transform: translate(5vw, 3vh) scale(0.94); }
+}
+@keyframes drift-c {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-4vw, -6vh) scale(1.1); }
+}
+@keyframes drift-d {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  45% { transform: translate(6vw, -5vh) scale(1.06); }
+  80% { transform: translate(-3vw, -2vh) scale(0.95); }
+}
+
+.animate-drift-a { animation: drift-a 26s ease-in-out infinite; }
+.animate-drift-b { animation: drift-b 32s ease-in-out infinite; }
+.animate-drift-c { animation: drift-c 22s ease-in-out infinite; }
+.animate-drift-d { animation: drift-d 28s ease-in-out infinite; }
+
+/* Subtle grain to prevent banding across large gradients */
+.grain-overlay {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/></svg>");
+  mix-blend-mode: multiply;
+  opacity: 0.06;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Hero shapes: crisp colour behind frosted glass so the blur reads.   */
+/* ------------------------------------------------------------------ */
+.orb-pink {
+  border-radius: 9999px;
+  background: radial-gradient(circle at 30% 26%, #ffc9e1 0%, var(--pink) 50%, #ec3f8b 100%);
+  box-shadow: 0 34px 60px -24px rgba(236, 63, 139, 0.6);
+}
+.orb-yellow {
+  border-radius: 9999px;
+  background: radial-gradient(circle at 32% 26%, #fff4b8 0%, var(--yellow) 55%, #ffb800 100%);
+  box-shadow: 0 26px 50px -20px rgba(255, 184, 0, 0.7);
+}
+.tile-cyan {
+  border-radius: 2rem;
+  background: linear-gradient(140deg, #a6f5ff 0%, var(--cyan) 100%);
+  box-shadow: 0 26px 50px -22px rgba(30, 190, 220, 0.7);
+}
+.tile-purple {
+  border-radius: 9999px;
+  background: linear-gradient(140deg, #bca6ff 0%, #6d3bf0 100%);
+  box-shadow: 0 30px 56px -24px rgba(91, 47, 224, 0.65);
+}
+
+@keyframes float-a {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+@keyframes float-b {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(12px); }
+}
+.animate-float-a { animation: float-a 9s ease-in-out infinite; }
+.animate-float-b { animation: float-b 11s ease-in-out infinite; }
+.animate-float-c { animation: float-a 13s ease-in-out infinite reverse; }
+
+/* ------------------------------------------------------------------ */
+/*  Gradient text: deep stops only, so it stays readable on cream.      */
+/* ------------------------------------------------------------------ */
+.gradient-text {
+  background: linear-gradient(
+    100deg,
+    var(--purple-deep) 0%,
+    var(--purple) 30%,
+    var(--pink-deep) 62%,
+    var(--purple-deep) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 10s linear infinite;
+}
+@keyframes shimmer {
+  to { background-position: 200% center; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: var(--cream); }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--purple), var(--pink));
+  border: 2px solid var(--cream);
+  border-radius: 999px;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--purple-deep);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
